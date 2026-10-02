@@ -5,6 +5,7 @@
 > A mobile-first prototype for construction site field reporting with on-device AI verification of construction stages. Workers submit photo reports from the field; a MobileNetV2 classifier (simulated in this prototype) instantly cross-checks the declared stage against the captured image. Project managers get a live feed of verified and flagged reports with one-tap approve/reject.
 
 **GitHub:** https://github.com/BayinganaEdwin/trace-field-reporting
+**Demo Video:** https://youtu.be/L5yPyRhlcvc
 
 ---
 
