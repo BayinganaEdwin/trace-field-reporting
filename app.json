@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Trace",
+    "slug": "trace",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.alustudent.trace"
+    },
+    "android": {
+      "package": "com.alustudent.trace"
+    },
+    "plugins": [
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Trace needs access to your photos to attach construction site images to reports.",
+          "cameraPermission": "Trace needs your camera to photograph construction stages for AI verification."
+        }
+      ]
+    ]
+  }
+}
