@@ -12,9 +12,9 @@
 
 // ── API URLs ──────────────────────────────────────────────────────────────────
 
-/** Node.js/Express REST backend (port 3000 locally) */
+/** Node.js/Express REST backend */
 export const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
+  process.env.EXPO_PUBLIC_API_URL ?? 'https://sitelog-backend-fkqs.onrender.com';
 
 /** Python Flask inference server (port 5001 locally).
  *  Only needed if you call the ML server directly from the app.
