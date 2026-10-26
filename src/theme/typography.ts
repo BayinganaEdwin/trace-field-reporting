@@ -4,7 +4,7 @@
 export const fontFamilies = {
   regular:   'DMSans_400Regular',
   medium:    'DMSans_500Medium',
-  semiBold:  'DMSans_600SemiBold',
+  semiBold:  'DMSans_700Bold',
   bold:      'DMSans_700Bold',
 } as const;
 

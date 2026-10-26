@@ -5,6 +5,7 @@ import { WorkerHomeScreen }           from '../screens/worker/WorkerHomeScreen';
 import { WorkerHistoryScreen }        from '../screens/worker/WorkerHistoryScreen';
 import { SubmitReportScreen }         from '../screens/worker/SubmitReportScreen';
 import { WorkerReportDetailScreen }   from '../screens/worker/WorkerReportDetailScreen';
+import { PanoramaCaptureScreen }      from '../screens/worker/PanoramaCaptureScreen';
 import { ProfileScreen }              from '../screens/shared/ProfileScreen';
 import { FloatingTabBar }             from '../components/layout/FloatingTabBar';
 import { colors }                     from '../theme/colors';
@@ -33,7 +34,7 @@ export function WorkerNavigator() {
         headerTintColor: colors.accent,
         headerBackTitle: 'Back',
         headerTitleStyle: {
-          fontFamily: 'DMSans_600SemiBold',
+          fontFamily: 'DMSans_700Bold',
           fontSize: 17,
           color: colors.textPrimary,
         },
@@ -42,9 +43,10 @@ export function WorkerNavigator() {
         contentStyle:        { backgroundColor: colors.bgSecondary },
       }}
     >
-      <Stack.Screen name="WorkerTabs"        component={WorkerTabs}               options={{ headerShown: false }} />
-      <Stack.Screen name="SubmitReport"      component={SubmitReportScreen}       options={{ title: 'Submit Report'  }} />
-      <Stack.Screen name="WorkerReportDetail"component={WorkerReportDetailScreen} options={{ title: 'Report Detail'  }} />
+      <Stack.Screen name="WorkerTabs"         component={WorkerTabs}               options={{ headerShown: false }} />
+      <Stack.Screen name="SubmitReport"       component={SubmitReportScreen}       options={{ title: 'Submit Report'  }} />
+      <Stack.Screen name="WorkerReportDetail" component={WorkerReportDetailScreen} options={{ title: 'Report Detail'  }} />
+      <Stack.Screen name="PanoramaCapture"    component={PanoramaCaptureScreen}    options={{ title: 'Panorama Capture' }} />
     </Stack.Navigator>
   );
 }

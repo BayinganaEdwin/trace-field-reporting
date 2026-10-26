@@ -1,16 +1,21 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator }   from '@react-navigation/bottom-tabs';
-import { ManagerHomeScreen }          from '../screens/manager/ManagerHomeScreen';
-import { ReportsFeedScreen }          from '../screens/manager/ReportsFeedScreen';
-import { ReportDetailScreen }         from '../screens/manager/ReportDetailScreen';
-import { NotificationsScreen }        from '../screens/manager/NotificationsScreen';
-import { ProfileScreen }              from '../screens/shared/ProfileScreen';
-import { FloatingTabBar }             from '../components/layout/FloatingTabBar';
-import { colors }                     from '../theme/colors';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { ManagerHomeScreen } from '../screens/manager/ManagerHomeScreen';
+import { ReportsFeedScreen } from '../screens/manager/ReportsFeedScreen';
+import { ReportDetailScreen } from '../screens/manager/ReportDetailScreen';
+import { CreateProjectScreen } from '../screens/manager/CreateProjectScreen';
+import { SiteDetailScreen } from '../screens/manager/SiteDetailScreen';
+import { AnalyticsScreen } from '../screens/manager/AnalyticsScreen';
+import { AIConfidenceScreen } from '../screens/manager/AIConfidenceScreen';
+import { SitesMapScreen } from '../screens/manager/SitesMapScreen';
+import { NotificationsScreen } from '../screens/manager/NotificationsScreen';
+import { ProfileScreen } from '../screens/shared/ProfileScreen';
+import { FloatingTabBar } from '../components/layout/FloatingTabBar';
+import { colors } from '../theme/colors';
 import type { ManagerTabParamList, ManagerStackParamList } from '../types';
 
-const Tab   = createBottomTabNavigator<ManagerTabParamList>();
+const Tab = createBottomTabNavigator<ManagerTabParamList>();
 const Stack = createNativeStackNavigator<ManagerStackParamList>();
 
 function ManagerTabs() {
@@ -19,10 +24,13 @@ function ManagerTabs() {
       tabBar={(props) => <FloatingTabBar {...props} />}
       screenOptions={{ headerShown: false }}
     >
-      <Tab.Screen name="ManagerHome"          component={ManagerHomeScreen}                          />
-      <Tab.Screen name="ReportsFeed"          component={ReportsFeedScreen}                          />
-      <Tab.Screen name="ManagerNotifications" component={NotificationsScreen}                        />
-      <Tab.Screen name="ManagerProfile"       children={() => <ProfileScreen role="manager" />}      />
+      <Tab.Screen name="ManagerHome" component={ManagerHomeScreen} />
+      <Tab.Screen name="ReportsFeed" component={ReportsFeedScreen} />
+      <Tab.Screen name="ManagerNotifications" component={NotificationsScreen} />
+      <Tab.Screen
+        name="ManagerProfile"
+        children={() => <ProfileScreen role="manager" />}
+      />
     </Tab.Navigator>
   );
 }
@@ -34,17 +42,50 @@ export function ManagerNavigator() {
         headerTintColor: colors.accent,
         headerBackTitle: 'Back',
         headerTitleStyle: {
-          fontFamily: 'DMSans_600SemiBold',
+          fontFamily: 'DMSans_700Bold',
           fontSize: 17,
           color: colors.textPrimary,
         },
-        headerStyle:         { backgroundColor: colors.bgSecondary },
+        headerStyle: { backgroundColor: colors.bgSecondary },
         headerShadowVisible: false,
-        contentStyle:        { backgroundColor: colors.bgSecondary },
+        contentStyle: { backgroundColor: colors.bgSecondary },
       }}
     >
-      <Stack.Screen name="ManagerTabs" component={ManagerTabs}         options={{ headerShown: false }} />
-      <Stack.Screen name="ReportDetail"component={ReportDetailScreen}  options={{ title: 'Report Detail' }} />
+      <Stack.Screen
+        name="ManagerTabs"
+        component={ManagerTabs}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="ReportDetail"
+        component={ReportDetailScreen}
+        options={{ title: 'Report Detail' }}
+      />
+      <Stack.Screen
+        name="CreateProject"
+        component={CreateProjectScreen}
+        options={{ title: 'New Project' }}
+      />
+      <Stack.Screen
+        name="SiteDetail"
+        component={SiteDetailScreen}
+        options={{ title: 'Site Overview' }}
+      />
+      <Stack.Screen
+        name="Analytics"
+        component={AnalyticsScreen}
+        options={{ title: 'Analytics' }}
+      />
+      <Stack.Screen
+        name="AIConfidence"
+        component={AIConfidenceScreen}
+        options={{ title: 'AI Analysis' }}
+      />
+      <Stack.Screen
+        name="SitesMap"
+        component={SitesMapScreen}
+        options={{ title: 'Sites Map' }}
+      />
     </Stack.Navigator>
   );
 }

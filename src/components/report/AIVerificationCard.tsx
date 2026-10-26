@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Card } from '../ui/Card';
 import { ProgressBar } from '../ui/ProgressBar';
 import { Typography } from '../ui/Typography';
@@ -12,21 +13,46 @@ import type { AIResult, ReportStatus } from '../../types';
 interface AIVerificationCardProps {
   status: ReportStatus;
   aiResult: AIResult | null;
+  hasPhoto?: boolean;
 }
 
-export function AIVerificationCard({ status, aiResult }: AIVerificationCardProps) {
-  // Loading / pending state
-  if (!aiResult || status === 'uploading' || status === 'pending' || status === 'ai_processing') {
+/**
+ * Replace raw snake_case stage keys in AI feedback text with human-readable labels.
+ * e.g. "Model detected reinforcement_placed with..." → "Model detected Reinforcement Placed with..."
+ */
+function humaniseFeedback(text: string): string {
+  return Object.entries(STAGE_LABELS).reduce(
+    (t, [key, label]) => t.replace(new RegExp(key, 'gi'), label),
+    text,
+  );
+}
+
+export function AIVerificationCard({ status, aiResult, hasPhoto = true }: AIVerificationCardProps) {
+  // Still uploading — show upload spinner
+  if (status === 'uploading') {
     return (
       <Card style={styles.card}>
         <View style={styles.loadingRow}>
           <ActivityIndicator size="small" color={colors.accent} />
           <View style={styles.loadingText}>
-            <Typography variant="subheadMedium" color={colors.textPrimary}>
-              AI Verification
-            </Typography>
+            <Typography variant="subheadMedium" color={colors.textPrimary}>Photo Check</Typography>
+            <Typography variant="footnote" color={colors.textSecondary}>Uploading photo…</Typography>
+          </View>
+        </View>
+      </Card>
+    );
+  }
+
+  // Pending + no photo = AI never runs; don't show a spinner
+  if (!aiResult && status === 'pending' && !hasPhoto) {
+    return (
+      <Card style={styles.card}>
+        <View style={styles.loadingRow}>
+          <Ionicons name="image-outline" size={18} color={colors.textQuaternary} />
+          <View style={styles.loadingText}>
+            <Typography variant="subheadMedium" color={colors.textPrimary}>Photo Check</Typography>
             <Typography variant="footnote" color={colors.textSecondary}>
-              {status === 'uploading' ? 'Uploading photo…' : 'Running MobileNetV2 classifier…'}
+              No photo attached — a manager will review this manually
             </Typography>
           </View>
         </View>
@@ -34,8 +60,63 @@ export function AIVerificationCard({ status, aiResult }: AIVerificationCardProps
     );
   }
 
+  // Pending + has photo = AI is still running → spinner
+  if (!aiResult || status === 'ai_processing') {
+    return (
+      <Card style={styles.card}>
+        <View style={styles.loadingRow}>
+          <ActivityIndicator size="small" color={colors.accent} />
+          <View style={styles.loadingText}>
+            <Typography variant="subheadMedium" color={colors.textPrimary}>Photo Check</Typography>
+            <Typography variant="footnote" color={colors.textSecondary}>
+              Analysing your photo…
+            </Typography>
+          </View>
+        </View>
+      </Card>
+    );
+  }
+
+  // Non-construction image — model said this isn't a construction site
+  if (aiResult.detectedStage === null) {
+    return (
+      <Card style={styles.card} padded={false}>
+        <View style={styles.header}>
+          <View>
+            <Typography variant="subheadMedium" color={colors.textPrimary}>Photo Check</Typography>
+            <Typography variant="footnote" color={colors.textSecondary}>
+              Automated photo analysis
+            </Typography>
+          </View>
+          <Ionicons name="camera-outline" size={18} color={colors.textQuaternary} />
+        </View>
+        <Divider />
+        <View style={[styles.verdict, styles.verdictMismatch]}>
+          <Ionicons name="alert-circle" size={16} color={colors.warningText} style={styles.verdictIcon} />
+          <Typography variant="subheadMedium" color={colors.warningText} style={styles.verdictText}>
+            This photo doesn't look like a construction site — a manager should review it
+          </Typography>
+        </View>
+        {aiResult.textFeedback ? (
+          <>
+            <Divider />
+            <View style={styles.feedbackSection}>
+              <Typography variant="overline" color={colors.textTertiary} style={styles.feedbackLabel}>
+                WHAT THE AI FOUND
+              </Typography>
+              <Typography variant="footnote" color={colors.textSecondary} style={styles.feedbackText}>
+                {humaniseFeedback(aiResult.textFeedback)}
+              </Typography>
+            </View>
+          </>
+        ) : null}
+      </Card>
+    );
+  }
+
   const isMatch = aiResult.isMatch;
   const confidence = aiResult.confidenceScore;
+
   const confidenceColor =
     confidence >= 90 ? colors.successText :
     confidence >= 75 ? colors.warningText :
@@ -46,26 +127,26 @@ export function AIVerificationCard({ status, aiResult }: AIVerificationCardProps
     confidence >= 75 ? '#F59E0B' :
     '#EF4444';
 
+  // Plain-English certainty label
+  const certaintyLabel =
+    confidence >= 90 ? 'Very confident' :
+    confidence >= 75 ? 'Fairly confident' :
+    confidence >= 50 ? 'Uncertain' :
+    'Low confidence';
+
   return (
     <Card style={styles.card} padded={false}>
       {/* Header */}
       <View style={styles.header}>
         <View>
           <Typography variant="subheadMedium" color={colors.textPrimary}>
-            AI Verification
+            Photo Check
           </Typography>
           <Typography variant="footnote" color={colors.textSecondary}>
-            MobileNetV2 · {aiResult.modelVersion}
+            Automated photo analysis
           </Typography>
         </View>
-        <View style={[styles.modePill, aiResult.inferenceMode === 'on_device' ? styles.onDevice : styles.serverMode]}>
-          <Typography
-            variant="overline"
-            color={aiResult.inferenceMode === 'on_device' ? colors.infoText : colors.textSecondary}
-          >
-            {aiResult.inferenceMode === 'on_device' ? 'On-Device' : 'Server'}
-          </Typography>
-        </View>
+        <Ionicons name="camera-outline" size={18} color={colors.textQuaternary} />
       </View>
 
       <Divider />
@@ -74,11 +155,13 @@ export function AIVerificationCard({ status, aiResult }: AIVerificationCardProps
       <View style={styles.section}>
         <View style={styles.confidenceRow}>
           <Typography variant="footnote" color={colors.textSecondary}>
-            Confidence Score
+            How certain the AI is
           </Typography>
-          <Typography variant="footnoteSemiBold" color={confidenceColor}>
-            {confidence}%
-          </Typography>
+          <View style={styles.confidenceBadge}>
+            <Typography variant="footnoteSemiBold" color={confidenceColor}>
+              {certaintyLabel} · {confidence}%
+            </Typography>
+          </View>
         </View>
         <ProgressBar value={confidence} fillColor={fillColor} style={styles.bar} />
       </View>
@@ -89,23 +172,27 @@ export function AIVerificationCard({ status, aiResult }: AIVerificationCardProps
       <View style={styles.section}>
         <View style={styles.comparisonRow}>
           <View style={styles.comparisonCell}>
-            <Typography variant="overline" color={colors.textTertiary}>Reported</Typography>
+            <Typography variant="overline" color={colors.textTertiary}>WORKER REPORTED</Typography>
             <Typography variant="subheadMedium" color={colors.textPrimary}>
               {STAGE_LABELS[aiResult.reportedStage]}
             </Typography>
           </View>
-          <View style={styles.arrow}>
-            <Typography variant="headline" color={isMatch ? colors.successText : colors.warningText}>
-              {isMatch ? '=' : '≠'}
-            </Typography>
+
+          <View style={styles.comparisonIcon}>
+            {isMatch ? (
+              <Ionicons name="checkmark-circle" size={22} color={colors.successText} />
+            ) : (
+              <Ionicons name="alert-circle" size={22} color={colors.warningText} />
+            )}
           </View>
+
           <View style={styles.comparisonCell}>
-            <Typography variant="overline" color={colors.textTertiary}>Detected</Typography>
+            <Typography variant="overline" color={colors.textTertiary}>AI IDENTIFIED</Typography>
             <Typography
               variant="subheadMedium"
               color={isMatch ? colors.textPrimary : colors.warningText}
             >
-              {STAGE_LABELS[aiResult.detectedStage]}
+              {aiResult.detectedStage ? STAGE_LABELS[aiResult.detectedStage] : 'Not a construction site'}
             </Typography>
           </View>
         </View>
@@ -113,15 +200,37 @@ export function AIVerificationCard({ status, aiResult }: AIVerificationCardProps
 
       {/* Verdict banner */}
       <View style={[styles.verdict, isMatch ? styles.verdictMatch : styles.verdictMismatch]}>
+        <Ionicons
+          name={isMatch ? 'checkmark-circle' : 'alert-circle'}
+          size={16}
+          color={isMatch ? colors.successText : colors.warningText}
+          style={styles.verdictIcon}
+        />
         <Typography
           variant="subheadMedium"
           color={isMatch ? colors.successText : colors.warningText}
+          style={styles.verdictText}
         >
           {isMatch
-            ? `Stage confirmed — ${confidence}% confidence`
-            : `Stage mismatch detected — review required`}
+            ? `Photo matches the reported stage`
+            : `The photo shows a different stage than reported — a manager should review this`}
         </Typography>
       </View>
+
+      {/* AI text feedback */}
+      {aiResult.textFeedback ? (
+        <>
+          <Divider />
+          <View style={styles.feedbackSection}>
+            <Typography variant="overline" color={colors.textTertiary} style={styles.feedbackLabel}>
+              WHAT THE AI FOUND
+            </Typography>
+            <Typography variant="footnote" color={colors.textSecondary} style={styles.feedbackText}>
+              {humaniseFeedback(aiResult.textFeedback)}
+            </Typography>
+          </View>
+        </>
+      ) : null}
     </Card>
   );
 }
@@ -134,32 +243,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing[4],
+    paddingHorizontal: spacing[5],
     paddingTop: spacing[4],
     paddingBottom: spacing[3],
   },
-  modePill: {
-    paddingHorizontal: spacing[2],
-    paddingVertical: 3,
-    borderRadius: 6,
-    borderWidth: 1,
-  },
-  onDevice: {
-    backgroundColor: colors.infoBg,
-    borderColor: colors.infoBorder,
-  },
-  serverMode: {
-    backgroundColor: colors.bgSecondary,
-    borderColor: colors.separator,
-  },
   section: {
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[5],
+    paddingVertical: spacing[4],
   },
   confidenceRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: spacing[2],
+  },
+  confidenceBadge: {
+    flexShrink: 1,
+    alignItems: 'flex-end',
   },
   bar: {},
   comparisonRow: {
@@ -171,19 +271,41 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 2,
   },
-  arrow: {
-    width: 24,
+  comparisonIcon: {
+    width: 28,
     alignItems: 'center',
   },
   verdict: {
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[3],
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingHorizontal: spacing[5],
+    paddingVertical: spacing[3] + 2,
+    gap: spacing[2],
   },
   verdictMatch: {
     backgroundColor: colors.successBg,
   },
   verdictMismatch: {
     backgroundColor: colors.warningBg,
+  },
+  verdictIcon: {
+    marginTop: 1,
+  },
+  verdictText: {
+    flex: 1,
+    lineHeight: 20,
+  },
+  feedbackSection: {
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[4],
+    paddingBottom: spacing[5],
+    gap: spacing[2],
+  },
+  feedbackLabel: {
+    letterSpacing: 0.8,
+  },
+  feedbackText: {
+    lineHeight: 22,
   },
   loadingRow: {
     flexDirection: 'row',

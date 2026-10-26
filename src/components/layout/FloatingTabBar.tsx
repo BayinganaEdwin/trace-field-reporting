@@ -29,6 +29,9 @@ const TAB_CONFIG: Record<string, TabConfig> = {
   ReportsFeed:          { activeIcon: 'documents',     inactiveIcon: 'documents-outline',     label: 'Reports'  },
   ManagerNotifications: { activeIcon: 'notifications', inactiveIcon: 'notifications-outline', label: 'Alerts'   },
   ManagerProfile:       { activeIcon: 'person',        inactiveIcon: 'person-outline',        label: 'Profile'  },
+  OwnerOverview:        { activeIcon: 'eye',           inactiveIcon: 'eye-outline',           label: 'Overview' },
+  OwnerReports:         { activeIcon: 'documents',     inactiveIcon: 'documents-outline',     label: 'Reports'  },
+  OwnerProfile:         { activeIcon: 'person',        inactiveIcon: 'person-outline',        label: 'Profile'  },
 };
 
 export function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
