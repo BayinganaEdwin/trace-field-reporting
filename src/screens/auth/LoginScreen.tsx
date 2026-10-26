@@ -8,6 +8,7 @@ import {
   Platform,
   ScrollView,
   Pressable,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,34 +18,42 @@ import { Typography } from '../../components/ui/Typography';
 import { Button } from '../../components/ui/Button';
 import { colors } from '../../theme/colors';
 import { spacing, radii, borderWidths } from '../../theme/spacing';
-import { setCurrentUserId, setCurrentUserRole, DEMO_USER_MAP } from '../../services/config';
+import {
+  setCurrentUserId,
+  setCurrentUserRole,
+  setCurrentUserName,
+  DEMO_USER_MAP,
+  API_BASE_URL,
+} from '../../services/config';
 import { useReports } from '../../hooks/useReports';
 import type { RootStackParamList } from '../../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
+// Demo emails map directly to seeded backend user IDs via DEMO_USER_MAP.
+// These bypass the API call (no network needed for the demo tiles).
 const DEMO_ACCOUNTS = [
   {
     role: 'worker' as const,
     label: 'Site Worker',
-    name: 'Jean Claude Nzeyimana',
-    email: 'worker@trace.rw',
+    name: 'Amara Diallo',
+    email: 'worker@trace.demo',
     password: '••••••••',
     detail: 'Submit field reports & photos',
   },
   {
     role: 'manager' as const,
     label: 'Project Manager',
-    name: 'David Uwimana',
-    email: 'manager@trace.rw',
+    name: 'Fatima Nkusi',
+    email: 'manager@trace.demo',
     password: '••••••••',
     detail: 'Review, approve & monitor sites',
   },
   {
     role: 'owner' as const,
     label: 'Property Owner',
-    name: 'Alice Uwase',
-    email: 'owner@trace.rw',
+    name: 'Patrick Habimana',
+    email: 'owner@trace.demo',
     password: '••••••••',
     detail: 'View project progress & reports',
   },
@@ -63,29 +72,61 @@ export function LoginScreen({ navigation }: Props) {
     setPassword(account.password);
   };
 
-  const handleSignIn = () => {
+  const handleSignIn = async () => {
     if (!email) return;
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      // Resolve the backend user ID for the demo account and inject into API headers
-      const prefix = email.startsWith('manager')
-        ? 'manager'
-        : email.startsWith('owner')
+
+    // ── Demo shortcut: known demo emails bypass the API ───────────────────
+    const demoPrefix = email.startsWith('manager@trace')
+      ? 'manager'
+      : email.startsWith('owner@trace')
         ? 'owner'
-        : 'worker';
-      setCurrentUserId(DEMO_USER_MAP[prefix] ?? DEMO_USER_MAP.worker);
-      setCurrentUserRole(prefix as 'worker' | 'manager' | 'owner');
-      // Re-fetch reports + sites now that we have a valid user ID
+        : email.startsWith('worker@trace')
+          ? 'worker'
+          : null;
+
+    if (demoPrefix) {
+      setCurrentUserId(DEMO_USER_MAP[demoPrefix]);
+      setCurrentUserRole(demoPrefix as 'worker' | 'manager' | 'owner');
       refresh();
-      if (prefix === 'manager') {
-        navigation.replace('ManagerApp');
-      } else if (prefix === 'owner') {
-        navigation.replace('OwnerApp');
-      } else {
-        navigation.replace('WorkerApp');
+      setLoading(false);
+      if (demoPrefix === 'manager') navigation.replace('ManagerApp');
+      else if (demoPrefix === 'owner') navigation.replace('OwnerApp');
+      else navigation.replace('WorkerApp');
+      return;
+    }
+
+    // ── Real account: look up by email via API ─────────────────────────────
+    try {
+      const res = await fetch(`${API_BASE_URL}/users/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      const body = await res.json();
+      if (!res.ok) {
+        Alert.alert(
+          'Sign in failed',
+          body.error ??
+            'Email not found. Check your credentials or create an account.',
+        );
+        return;
       }
-    }, 900);
+      setCurrentUserId(body.id);
+      setCurrentUserRole(body.role as 'worker' | 'manager' | 'owner');
+      setCurrentUserName(body.name);
+      refresh();
+      if (body.role === 'manager') navigation.replace('ManagerApp');
+      else if (body.role === 'owner') navigation.replace('OwnerApp');
+      else navigation.replace('WorkerApp');
+    } catch {
+      Alert.alert(
+        'Connection error',
+        'Could not reach the server. Check your network and try again.',
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -217,8 +258,8 @@ export function LoginScreen({ navigation }: Props) {
                           account.role === 'manager'
                             ? colors.accentLight
                             : account.role === 'owner'
-                            ? colors.warningBg
-                            : colors.successBg,
+                              ? colors.warningBg
+                              : colors.successBg,
                       },
                     ]}
                   >
@@ -230,8 +271,8 @@ export function LoginScreen({ navigation }: Props) {
                             account.role === 'manager'
                               ? colors.accent
                               : account.role === 'owner'
-                              ? colors.warningText
-                              : colors.successText,
+                                ? colors.warningText
+                                : colors.successText,
                         },
                       ]}
                     />
@@ -261,7 +302,11 @@ export function LoginScreen({ navigation }: Props) {
             activeOpacity={0.7}
             style={styles.signupLink}
           >
-            <Typography variant="footnote" color={colors.textSecondary} align="center">
+            <Typography
+              variant="footnote"
+              color={colors.textSecondary}
+              align="center"
+            >
               New to Trace?{' '}
               <Typography variant="footnoteSemiBold" color={colors.accent}>
                 Create an account

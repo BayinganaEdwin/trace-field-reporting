@@ -60,6 +60,7 @@ interface RawSite {
   pendingCount: number;
   rei: number;               // 0–100
   currentStage: ConstructionStage | null;
+  workerCount: number;       // from site_workers junction table
 }
 
 // ── Report adapter ────────────────────────────────────────────────────────────
@@ -132,7 +133,7 @@ export function adaptSite(row: RawSite): Site {
     location: row.address ?? `${row.latitude ?? '—'}, ${row.longitude ?? '—'}`,
     currentStage: row.currentStage ?? 'formwork_erected',
     progressPercent: row.rei ?? 0,
-    workerCount: 0,            // not yet returned by backend — future enhancement
+    workerCount: row.workerCount ?? 0,
     lastReportAt: row.updated_at ?? null,
   };
 }

@@ -1,5 +1,5 @@
 /**
- * api.ts — base HTTP client for the SiteLog backend.
+ * api.ts — base HTTP client for the Trace backend.
  *
  * Wraps fetch() with:
  *  - Automatic X-User-Id header injection

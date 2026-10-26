@@ -22,6 +22,7 @@ import {
   Platform,
   ScrollView,
   Pressable,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -31,6 +32,8 @@ import { Typography } from '../../components/ui/Typography';
 import { Button } from '../../components/ui/Button';
 import { colors } from '../../theme/colors';
 import { spacing, radii, borderWidths } from '../../theme/spacing';
+import { setCurrentUserId, setCurrentUserRole, setCurrentUserName, API_BASE_URL } from '../../services/config';
+import { useReports } from '../../hooks/useReports';
 import type { RootStackParamList, UserRole } from '../../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Signup'>;
@@ -109,6 +112,7 @@ function RoleTile({ role, selected, onSelect }: RoleTileProps) {
 
 // ── Main screen ───────────────────────────────────────────────────────────────
 export function SignupScreen({ navigation }: Props) {
+  const { refresh } = useReports();
   const [role, setRole] = useState<UserRole>('worker');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -121,18 +125,39 @@ export function SignupScreen({ navigation }: Props) {
   const canSubmit =
     role !== null && fullName.trim().length >= 2 && email.includes('@') && password.length >= 6;
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!canSubmit) return;
     setLoading(true);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const res = await fetch(`${API_BASE_URL}/users/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: fullName.trim(),
+          email: email.toLowerCase().trim(),
+          role,
+        }),
+      });
+      const body = await res.json();
+      if (!res.ok) {
+        Alert.alert('Registration failed', body.error ?? 'Please try again');
+        return;
+      }
+      setCurrentUserId(body.id);
+      setCurrentUserRole(role as 'worker' | 'manager');
+      setCurrentUserName(body.name);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      refresh();
       if (role === 'manager') {
         navigation.replace('ManagerApp');
       } else {
         navigation.replace('WorkerApp');
       }
-    }, 1000);
+    } catch {
+      Alert.alert('Connection error', 'Could not reach the server. Check your network and try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

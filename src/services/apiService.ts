@@ -14,7 +14,7 @@
 import { api } from './api';
 import { API_BASE_URL, getCurrentUserId } from './config';
 import { adaptReport, adaptSite } from './adapters';
-import type { Report, Site } from '../types';
+import type { Report, Site, SiteWorker } from '../types';
 import type { SubmitReportPayload } from '../data/mockService';
 
 // ── Queries ───────────────────────────────────────────────────────────────────
@@ -33,6 +33,34 @@ export async function fetchSites(): Promise<Site[]> {
   const rows = await api.get<any[]>('/sites');
   console.log('[apiService] fetchSites →', rows.length, 'sites', rows.map(r => r.id));
   return rows.map(adaptSite);
+}
+
+// ── Worker assignment ─────────────────────────────────────────────────────────
+
+/** List workers currently assigned to a site. Manager/owner only. */
+export async function fetchSiteWorkers(siteId: string): Promise<SiteWorker[]> {
+  return api.get<SiteWorker[]>(`/sites/${siteId}/workers`);
+}
+
+/** Workers NOT yet assigned to the site — for the "Add Worker" picker. Manager only. */
+export async function fetchAvailableWorkers(siteId: string): Promise<SiteWorker[]> {
+  return api.get<SiteWorker[]>(`/sites/${siteId}/available-workers`);
+}
+
+/** Assign a worker to a site. Manager only. */
+export async function assignWorkerToSite(
+  siteId: string,
+  workerId: string,
+): Promise<{ siteId: string; workerId: string; workerName: string }> {
+  return api.post(`/sites/${siteId}/workers`, { workerId });
+}
+
+/** Unassign a worker from a site. Manager only. */
+export async function unassignWorkerFromSite(
+  siteId: string,
+  workerId: string,
+): Promise<{ deleted: boolean }> {
+  return api.delete(`/sites/${siteId}/workers/${workerId}`);
 }
 
 // ── Submit (3-phase) ──────────────────────────────────────────────────────────

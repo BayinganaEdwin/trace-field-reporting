@@ -36,6 +36,15 @@ export interface Site {
   lastReportAt: string | null;
 }
 
+export interface SiteWorker {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  assigned_at: string;
+  assigned_by: string;
+}
+
 export interface AIResult {
   /** null when the model classified the image as not a construction site */
   detectedStage: ConstructionStage | null;

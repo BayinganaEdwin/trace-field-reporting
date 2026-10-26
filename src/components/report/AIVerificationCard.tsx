@@ -27,7 +27,11 @@ function humaniseFeedback(text: string): string {
   );
 }
 
-export function AIVerificationCard({ status, aiResult, hasPhoto = true }: AIVerificationCardProps) {
+export function AIVerificationCard({
+  status,
+  aiResult,
+  hasPhoto = true,
+}: AIVerificationCardProps) {
   // Still uploading — show upload spinner
   if (status === 'uploading') {
     return (
@@ -35,8 +39,12 @@ export function AIVerificationCard({ status, aiResult, hasPhoto = true }: AIVeri
         <View style={styles.loadingRow}>
           <ActivityIndicator size="small" color={colors.accent} />
           <View style={styles.loadingText}>
-            <Typography variant="subheadMedium" color={colors.textPrimary}>Photo Check</Typography>
-            <Typography variant="footnote" color={colors.textSecondary}>Uploading photo…</Typography>
+            <Typography variant="subheadMedium" color={colors.textPrimary}>
+              Photo Check
+            </Typography>
+            <Typography variant="footnote" color={colors.textSecondary}>
+              Uploading photo…
+            </Typography>
           </View>
         </View>
       </Card>
@@ -48,9 +56,15 @@ export function AIVerificationCard({ status, aiResult, hasPhoto = true }: AIVeri
     return (
       <Card style={styles.card}>
         <View style={styles.loadingRow}>
-          <Ionicons name="image-outline" size={18} color={colors.textQuaternary} />
+          <Ionicons
+            name="image-outline"
+            size={18}
+            color={colors.textQuaternary}
+          />
           <View style={styles.loadingText}>
-            <Typography variant="subheadMedium" color={colors.textPrimary}>Photo Check</Typography>
+            <Typography variant="subheadMedium" color={colors.textPrimary}>
+              Photo Check
+            </Typography>
             <Typography variant="footnote" color={colors.textSecondary}>
               No photo attached — a manager will review this manually
             </Typography>
@@ -67,7 +81,9 @@ export function AIVerificationCard({ status, aiResult, hasPhoto = true }: AIVeri
         <View style={styles.loadingRow}>
           <ActivityIndicator size="small" color={colors.accent} />
           <View style={styles.loadingText}>
-            <Typography variant="subheadMedium" color={colors.textPrimary}>Photo Check</Typography>
+            <Typography variant="subheadMedium" color={colors.textPrimary}>
+              Photo Check
+            </Typography>
             <Typography variant="footnote" color={colors.textSecondary}>
               Analysing your photo…
             </Typography>
@@ -83,28 +99,52 @@ export function AIVerificationCard({ status, aiResult, hasPhoto = true }: AIVeri
       <Card style={styles.card} padded={false}>
         <View style={styles.header}>
           <View>
-            <Typography variant="subheadMedium" color={colors.textPrimary}>Photo Check</Typography>
+            <Typography variant="subheadMedium" color={colors.textPrimary}>
+              Photo Check
+            </Typography>
             <Typography variant="footnote" color={colors.textSecondary}>
               Automated photo analysis
             </Typography>
           </View>
-          <Ionicons name="camera-outline" size={18} color={colors.textQuaternary} />
+          <Ionicons
+            name="camera-outline"
+            size={18}
+            color={colors.textQuaternary}
+          />
         </View>
         <Divider />
         <View style={[styles.verdict, styles.verdictMismatch]}>
-          <Ionicons name="alert-circle" size={16} color={colors.warningText} style={styles.verdictIcon} />
-          <Typography variant="subheadMedium" color={colors.warningText} style={styles.verdictText}>
-            This photo doesn't look like a construction site — a manager should review it
+          <Ionicons
+            name="alert-circle"
+            size={16}
+            color={colors.warningText}
+            style={styles.verdictIcon}
+          />
+          <Typography
+            variant="subheadMedium"
+            color={colors.warningText}
+            style={styles.verdictText}
+          >
+            This photo doesn't look like a construction site. A manager should
+            review it
           </Typography>
         </View>
         {aiResult.textFeedback ? (
           <>
             <Divider />
             <View style={styles.feedbackSection}>
-              <Typography variant="overline" color={colors.textTertiary} style={styles.feedbackLabel}>
-                WHAT THE AI FOUND
+              <Typography
+                variant="overline"
+                color={colors.textTertiary}
+                style={styles.feedbackLabel}
+              >
+                WHAT THE AI MODEL FOUND
               </Typography>
-              <Typography variant="footnote" color={colors.textSecondary} style={styles.feedbackText}>
+              <Typography
+                variant="footnote"
+                color={colors.textSecondary}
+                style={styles.feedbackText}
+              >
                 {humaniseFeedback(aiResult.textFeedback)}
               </Typography>
             </View>
@@ -118,21 +158,24 @@ export function AIVerificationCard({ status, aiResult, hasPhoto = true }: AIVeri
   const confidence = aiResult.confidenceScore;
 
   const confidenceColor =
-    confidence >= 90 ? colors.successText :
-    confidence >= 75 ? colors.warningText :
-    colors.dangerText;
+    confidence >= 90
+      ? colors.successText
+      : confidence >= 75
+        ? colors.warningText
+        : colors.dangerText;
 
   const fillColor =
-    confidence >= 90 ? '#10B981' :
-    confidence >= 75 ? '#F59E0B' :
-    '#EF4444';
+    confidence >= 90 ? '#10B981' : confidence >= 75 ? '#F59E0B' : '#EF4444';
 
   // Plain-English certainty label
   const certaintyLabel =
-    confidence >= 90 ? 'Very confident' :
-    confidence >= 75 ? 'Fairly confident' :
-    confidence >= 50 ? 'Uncertain' :
-    'Low confidence';
+    confidence >= 90
+      ? 'Very confident'
+      : confidence >= 75
+        ? 'Fairly confident'
+        : confidence >= 50
+          ? 'Uncertain'
+          : 'Low confidence';
 
   return (
     <Card style={styles.card} padded={false}>
@@ -146,7 +189,11 @@ export function AIVerificationCard({ status, aiResult, hasPhoto = true }: AIVeri
             Automated photo analysis
           </Typography>
         </View>
-        <Ionicons name="camera-outline" size={18} color={colors.textQuaternary} />
+        <Ionicons
+          name="camera-outline"
+          size={18}
+          color={colors.textQuaternary}
+        />
       </View>
 
       <Divider />
@@ -163,7 +210,11 @@ export function AIVerificationCard({ status, aiResult, hasPhoto = true }: AIVeri
             </Typography>
           </View>
         </View>
-        <ProgressBar value={confidence} fillColor={fillColor} style={styles.bar} />
+        <ProgressBar
+          value={confidence}
+          fillColor={fillColor}
+          style={styles.bar}
+        />
       </View>
 
       <Divider />
@@ -172,7 +223,9 @@ export function AIVerificationCard({ status, aiResult, hasPhoto = true }: AIVeri
       <View style={styles.section}>
         <View style={styles.comparisonRow}>
           <View style={styles.comparisonCell}>
-            <Typography variant="overline" color={colors.textTertiary}>WORKER REPORTED</Typography>
+            <Typography variant="overline" color={colors.textTertiary}>
+              WORKER REPORTED
+            </Typography>
             <Typography variant="subheadMedium" color={colors.textPrimary}>
               {STAGE_LABELS[aiResult.reportedStage]}
             </Typography>
@@ -180,26 +233,43 @@ export function AIVerificationCard({ status, aiResult, hasPhoto = true }: AIVeri
 
           <View style={styles.comparisonIcon}>
             {isMatch ? (
-              <Ionicons name="checkmark-circle" size={22} color={colors.successText} />
+              <Ionicons
+                name="checkmark-circle"
+                size={22}
+                color={colors.successText}
+              />
             ) : (
-              <Ionicons name="alert-circle" size={22} color={colors.warningText} />
+              <Ionicons
+                name="alert-circle"
+                size={22}
+                color={colors.warningText}
+              />
             )}
           </View>
 
           <View style={styles.comparisonCell}>
-            <Typography variant="overline" color={colors.textTertiary}>AI IDENTIFIED</Typography>
+            <Typography variant="overline" color={colors.textTertiary}>
+              AI IDENTIFIED
+            </Typography>
             <Typography
               variant="subheadMedium"
               color={isMatch ? colors.textPrimary : colors.warningText}
             >
-              {aiResult.detectedStage ? STAGE_LABELS[aiResult.detectedStage] : 'Not a construction site'}
+              {aiResult.detectedStage
+                ? STAGE_LABELS[aiResult.detectedStage]
+                : 'Not a construction site'}
             </Typography>
           </View>
         </View>
       </View>
 
       {/* Verdict banner */}
-      <View style={[styles.verdict, isMatch ? styles.verdictMatch : styles.verdictMismatch]}>
+      <View
+        style={[
+          styles.verdict,
+          isMatch ? styles.verdictMatch : styles.verdictMismatch,
+        ]}
+      >
         <Ionicons
           name={isMatch ? 'checkmark-circle' : 'alert-circle'}
           size={16}
@@ -222,10 +292,18 @@ export function AIVerificationCard({ status, aiResult, hasPhoto = true }: AIVeri
         <>
           <Divider />
           <View style={styles.feedbackSection}>
-            <Typography variant="overline" color={colors.textTertiary} style={styles.feedbackLabel}>
-              WHAT THE AI FOUND
+            <Typography
+              variant="overline"
+              color={colors.textTertiary}
+              style={styles.feedbackLabel}
+            >
+              WHAT THE AI MODELFOUND
             </Typography>
-            <Typography variant="footnote" color={colors.textSecondary} style={styles.feedbackText}>
+            <Typography
+              variant="footnote"
+              color={colors.textSecondary}
+              style={styles.feedbackText}
+            >
               {humaniseFeedback(aiResult.textFeedback)}
             </Typography>
           </View>

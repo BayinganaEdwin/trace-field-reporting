@@ -1,20 +1,25 @@
 /**
  * config.ts — single source of truth for all API configuration.
  *
- * To switch environments, change API_BASE_URL here (or via env var).
- * To toggle between real backend and mock data, flip USE_REAL_API.
+ * To switch between local and production, change this one line:
  *
- * In production:
- *   API_BASE_URL  = 'https://api.sitelog.rw'
- *   ML_BASE_URL   = 'https://ml.sitelog.rw'  (or omit if Node proxies to Flask)
- *   USE_REAL_API  = true
+ *   const ENV = 'local';       → http://localhost:3001
+ *   const ENV = 'production';  → https://sitelog-backend-fkqs.onrender.com
  */
+
+// ── Environment toggle — change this one value ────────────────────────────────
+const ENV: 'local' | 'production' = 'local';
+
+const URLS = {
+  local:      'http://localhost:3000',
+  production: 'https://sitelog-backend-fkqs.onrender.com',
+};
 
 // ── API URLs ──────────────────────────────────────────────────────────────────
 
 /** Node.js/Express REST backend */
 export const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL ?? 'https://sitelog-backend-fkqs.onrender.com';
+  process.env.EXPO_PUBLIC_API_URL ?? URLS[ENV];
 
 /** Python Flask inference server (port 5001 locally).
  *  Only needed if you call the ML server directly from the app.

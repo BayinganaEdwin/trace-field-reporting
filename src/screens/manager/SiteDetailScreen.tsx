@@ -3,7 +3,7 @@
  * Per-site deep-dive: hero stats, REI, stage progress, full report history for the site.
  * Accessible by tapping a site card on ManagerHomeScreen.
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   ScrollView,
@@ -11,6 +11,8 @@ import {
   TouchableOpacity,
   Platform,
   RefreshControl,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -23,10 +25,16 @@ import { ProgressBar } from '../../components/ui/ProgressBar';
 import { ReportCard } from '../../components/report/ReportCard';
 import { EmptyState } from '../../components/layout/EmptyState';
 import { useReports } from '../../hooks/useReports';
+import {
+  fetchSiteWorkers,
+  fetchAvailableWorkers,
+  assignWorkerToSite,
+  unassignWorkerFromSite,
+} from '../../services/apiService';
 import { colors } from '../../theme/colors';
 import { spacing, radii, borderWidths } from '../../theme/spacing';
 import { STAGE_LABELS } from '../../types';
-import type { ManagerStackParamList, ReportStatus } from '../../types';
+import type { ManagerStackParamList, ReportStatus, SiteWorker } from '../../types';
 
 type Props = NativeStackScreenProps<ManagerStackParamList, 'SiteDetail'>;
 type Nav   = NativeStackNavigationProp<ManagerStackParamList>;
@@ -191,6 +199,80 @@ export function SiteDetailScreen({ route }: Props) {
 
   const [filter, setFilter] = useState<FilterKey>('all');
 
+  // ── Team state ─────────────────────────────────────────────────────────────
+  const [assignedWorkers, setAssignedWorkers] = useState<SiteWorker[]>([]);
+  const [teamLoading, setTeamLoading] = useState(false);
+  const [teamError, setTeamError] = useState<string | null>(null);
+
+  const loadTeam = useCallback(async () => {
+    setTeamLoading(true);
+    setTeamError(null);
+    try {
+      const workers = await fetchSiteWorkers(siteId);
+      setAssignedWorkers(workers);
+    } catch (err: any) {
+      setTeamError(err?.message ?? 'Failed to load team');
+    } finally {
+      setTeamLoading(false);
+    }
+  }, [siteId]);
+
+  useEffect(() => { loadTeam(); }, [loadTeam]);
+
+  const handleUnassign = (worker: SiteWorker) => {
+    Alert.alert(
+      'Remove worker',
+      `Remove ${worker.name} from this site?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await unassignWorkerFromSite(siteId, worker.id);
+              setAssignedWorkers(prev => prev.filter(w => w.id !== worker.id));
+              refresh(); // refresh site to update workerCount badge
+            } catch (err: any) {
+              Alert.alert('Error', err?.message ?? 'Could not remove worker');
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const handleAddWorker = async () => {
+    try {
+      const available = await fetchAvailableWorkers(siteId);
+      if (available.length === 0) {
+        Alert.alert('No workers available', 'All workers are already assigned to this site.');
+        return;
+      }
+      Alert.alert(
+        'Add worker',
+        'Select a worker to assign:',
+        [
+          ...available.map(w => ({
+            text: w.name,
+            onPress: async () => {
+              try {
+                await assignWorkerToSite(siteId, w.id);
+                await loadTeam();
+                refresh();
+              } catch (err: any) {
+                Alert.alert('Error', err?.message ?? 'Could not assign worker');
+              }
+            },
+          })),
+          { text: 'Cancel', style: 'cancel' },
+        ],
+      );
+    } catch (err: any) {
+      Alert.alert('Error', err?.message ?? 'Could not load available workers');
+    }
+  };
+
   const site = sites.find((s) => s.id === siteId);
   if (!site) return null;
 
@@ -252,6 +334,53 @@ export function SiteDetailScreen({ route }: Props) {
           Stage Progress
         </Typography>
         <StageTimeline currentStage={site.currentStage} />
+      </View>
+
+      {/* Team card */}
+      <View style={styles.card}>
+        <View style={styles.teamHeader}>
+          <Typography variant="headline" color={colors.textPrimary}>Team</Typography>
+          <TouchableOpacity
+            onPress={handleAddWorker}
+            activeOpacity={0.75}
+            style={styles.addWorkerBtn}
+          >
+            <Ionicons name="person-add-outline" size={14} color={colors.accent} />
+            <Typography variant="subheadMedium" color={colors.accent}>Add</Typography>
+          </TouchableOpacity>
+        </View>
+
+        {teamLoading && (
+          <ActivityIndicator size="small" color={colors.accent} style={{ marginVertical: spacing[3] }} />
+        )}
+        {!teamLoading && teamError && (
+          <Typography variant="footnote" color={colors.textTertiary}>{teamError}</Typography>
+        )}
+        {!teamLoading && !teamError && assignedWorkers.length === 0 && (
+          <Typography variant="footnote" color={colors.textTertiary}>
+            No workers assigned yet. Tap Add to assign one.
+          </Typography>
+        )}
+        {!teamLoading && assignedWorkers.map((worker) => (
+          <View key={worker.id} style={styles.workerRow}>
+            <View style={styles.workerAvatar}>
+              <Typography variant="footnote" color={colors.accent}>
+                {worker.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+              </Typography>
+            </View>
+            <View style={styles.workerInfo}>
+              <Typography variant="subheadMedium" color={colors.textPrimary}>{worker.name}</Typography>
+              <Typography variant="footnote" color={colors.textTertiary}>{worker.email}</Typography>
+            </View>
+            <TouchableOpacity
+              onPress={() => handleUnassign(worker)}
+              activeOpacity={0.75}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="close-circle-outline" size={20} color={colors.textQuaternary} />
+            </TouchableOpacity>
+          </View>
+        ))}
       </View>
 
       {/* Stat chips */}
@@ -386,6 +515,43 @@ const styles = StyleSheet.create({
     height: 40,
     backgroundColor: colors.separator,
     marginHorizontal: spacing[2],
+  },
+
+  // Team card
+  teamHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing[3],
+  },
+  addWorkerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[1],
+    borderRadius: radii.full,
+    backgroundColor: colors.accentLight,
+  },
+  workerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[3],
+    paddingVertical: spacing[2],
+    borderTopWidth: borderWidths.hairline,
+    borderTopColor: colors.separator,
+  },
+  workerAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.accentLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  workerInfo: {
+    flex: 1,
+    gap: 2,
   },
 
   // Section + filter

@@ -80,13 +80,18 @@ export function ReportsProvider({ children }: ReportsProviderProps) {
     setLoading(true);
     setError(null);
     try {
-      const [r, s] = await Promise.all([fetchReports(), fetchSites()]);
-      setReports(scopeReports(r));
+      // Sites load independently — no auth required, so this always succeeds
+      const s = await fetchSites();
       setSites(s);
-      // Default to first site on initial load; preserve selection on refresh
       setActiveSiteState((prev) => prev ?? s[0] ?? null);
     } catch {
-      setError('Failed to load data. Pull to refresh.');
+      // Sites failing is non-fatal — app can still show empty state
+    }
+    try {
+      const r = await fetchReports();
+      setReports(scopeReports(r));
+    } catch {
+      setError('Failed to load reports. Pull to refresh.');
     } finally {
       setLoading(false);
     }
