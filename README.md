@@ -74,7 +74,7 @@ Trace replaces WhatsApp-based reporting with a structured mobile platform that:
 ### Run locally
 
 ```bash
-git clone https://github.com/edwinbayingana/trace-field-reporting.git
+git clone https://github.com/BayinganaEdwin/trace-field-reporting.git
 cd trace-field-reporting
 npm install
 npx expo start
@@ -85,7 +85,7 @@ npx expo start
 Open `src/services/config.ts` and change the single ENV line:
 
 ```ts
-// 'local'      → http://localhost:3001
+// 'local'      → http://localhost:3000
 // 'production' → https://sitelog-backend-fkqs.onrender.com
 const ENV: 'local' | 'production' = 'production';
 ```
@@ -120,9 +120,9 @@ trace-field-reporting/
 
 | Repository                                                               | Description                            |
 | ------------------------------------------------------------------------ | -------------------------------------- |
-| [sitelog-backend](https://github.com/edwinbayingana/sitelog-backend)     | Express REST API + SQLite              |
-| [sitelog-dashboard](https://github.com/edwinbayingana/sitelog-dashboard) | Next.js manager dashboard              |
-| [sitelog-model](https://github.com/edwinbayingana/sitelog-model)         | Flask ML server + MobileNetV2 training |
+| [trace-field-reporting-be](https://github.com/BayinganaEdwin/trace-field-reporting-be)             | Express REST API + SQLite              |
+| [trace-field-reporting-dashboard](https://github.com/BayinganaEdwin/trace-field-reporting-dashboard) | Next.js manager dashboard              |
+| [trace-ml-server](https://github.com/BayinganaEdwin/trace-ml-server)                               | Flask ML server + MobileNetV2 training |
 
 ---
 
