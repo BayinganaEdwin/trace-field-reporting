@@ -10,7 +10,10 @@
       "bundleIdentifier": "com.alustudent.trace"
     },
     "android": {
-      "package": "com.alustudent.trace"
+      "package": "com.alustudent.trace",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "plugins": [
       "expo-font",
@@ -21,6 +24,11 @@
           "cameraPermission": "Trace needs your camera to photograph construction stages for AI verification."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "1eaa69a5-b42b-4ca6-b9d5-1a325739e4a7"
+      }
+    }
   }
 }
