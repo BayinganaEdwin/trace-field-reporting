@@ -1,9 +1,22 @@
 import type { Report, Site, User } from '../types';
 
+// Kigali site coordinates (approximate real locations)
+export const SITE_COORDS: Record<string, { lat: number; lng: number }> = {
+  'site-001': { lat: -1.9441, lng: 30.0619 }, // Kacyiru, Gasabo
+  'site-002': { lat: -1.9348, lng: 30.1076 }, // Kimironko, Gasabo
+};
+
 export const MOCK_WORKER: User = {
   id: 'usr-001',
   name: 'Jean Claude Nzeyimana',
   role: 'worker',
+  siteId: 'site-001',
+};
+
+export const MOCK_OWNER: User = {
+  id: 'usr-004',
+  name: 'Alice Uwase',
+  role: 'owner',
   siteId: 'site-001',
 };
 
@@ -60,7 +73,7 @@ export const MOCK_REPORTS: Report[] = [
     submittedByName: 'Alice Mukamurenzi',
     reportedStage: 'concrete_poured',
     notes: 'Ground floor slab complete. Curing compound applied. Estimated curing time 28 days.',
-    photoUri: null,
+    photoUri: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&q=80',
     status: 'verified',
     aiResult: {
       detectedStage: 'concrete_poured',
@@ -70,11 +83,19 @@ export const MOCK_REPORTS: Report[] = [
       inferenceMode: 'on_device',
       modelVersion: 'mobilenetv2-v1.0',
       processedAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+      textFeedback: 'Concrete surface texture and fresh pour characteristics are clearly visible. Formwork edges and vibration patterns confirm an active pour at this stage. No structural anomalies detected.',
     },
     submittedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
     reviewedAt: null,
     reviewedById: null,
     isOfflineSubmission: true,
+    geoLocation: {
+      lat: -1.9352,
+      lng: 30.1079,
+      distanceFromSite: 34,
+      isOnSite: true,
+      capturedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+    },
   },
   {
     id: 'rpt-0039',
@@ -84,7 +105,7 @@ export const MOCK_REPORTS: Report[] = [
     submittedByName: 'Jean Claude Nzeyimana',
     reportedStage: 'concrete_poured',
     notes: 'Morning pour on column row C.',
-    photoUri: null,
+    photoUri: 'https://images.unsplash.com/photo-1590486803833-1c5dc8ddd4c8?w=800&q=80',
     status: 'flagged',
     aiResult: {
       detectedStage: 'reinforcement_placed',
@@ -94,11 +115,19 @@ export const MOCK_REPORTS: Report[] = [
       inferenceMode: 'server',
       modelVersion: 'mobilenetv2-v1.0',
       processedAt: new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString(),
+      textFeedback: 'The image shows exposed rebar and tied reinforcement elements consistent with the reinforcement placement stage. Concrete pour markers are not present in this photo. The declared stage (concrete poured) does not align with the visual evidence — please re-submit with an updated photo or correct the stage.',
     },
     submittedAt: new Date(Date.now() - 27 * 60 * 60 * 1000).toISOString(),
     reviewedAt: null,
     reviewedById: null,
     isOfflineSubmission: false,
+    geoLocation: {
+      lat: -1.9445,
+      lng: 30.0621,
+      distanceFromSite: 18,
+      isOnSite: true,
+      capturedAt: new Date(Date.now() - 27 * 60 * 60 * 1000).toISOString(),
+    },
   },
   {
     id: 'rpt-0038',
@@ -108,7 +137,7 @@ export const MOCK_REPORTS: Report[] = [
     submittedByName: 'Alice Mukamurenzi',
     reportedStage: 'formwork_erected',
     notes: '',
-    photoUri: null,
+    photoUri: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=800&q=80',
     status: 'approved',
     aiResult: {
       detectedStage: 'formwork_erected',
@@ -118,11 +147,19 @@ export const MOCK_REPORTS: Report[] = [
       inferenceMode: 'server',
       modelVersion: 'mobilenetv2-v1.0',
       processedAt: new Date(Date.now() - 50 * 60 * 60 * 1000).toISOString(),
+      textFeedback: 'Wooden formwork panels and support structures are clearly assembled and braced. Panel alignment and shoring geometry match formwork erection standards. High confidence classification — this is a strong match for the declared stage.',
     },
     submittedAt: new Date(Date.now() - 51 * 60 * 60 * 1000).toISOString(),
     reviewedAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
     reviewedById: 'usr-003',
     isOfflineSubmission: false,
+    geoLocation: {
+      lat: -1.9350,
+      lng: 30.1078,
+      distanceFromSite: 22,
+      isOnSite: true,
+      capturedAt: new Date(Date.now() - 51 * 60 * 60 * 1000).toISOString(),
+    },
   },
   {
     id: 'rpt-0037',
@@ -132,7 +169,7 @@ export const MOCK_REPORTS: Report[] = [
     submittedByName: 'Jean Claude Nzeyimana',
     reportedStage: 'reinforcement_placed',
     notes: 'Columns B1–B4. All ties complete.',
-    photoUri: null,
+    photoUri: 'https://images.unsplash.com/photo-1565793979558-c0b96fb5527e?w=800&q=80',
     status: 'approved',
     aiResult: {
       detectedStage: 'reinforcement_placed',
@@ -142,10 +179,18 @@ export const MOCK_REPORTS: Report[] = [
       inferenceMode: 'server',
       modelVersion: 'mobilenetv2-v1.0',
       processedAt: new Date(Date.now() - 74 * 60 * 60 * 1000).toISOString(),
+      textFeedback: 'Steel rebar grid and tie wires are visible with consistent spacing. The reinforcement layout appears well-executed with no visible gaps or structural concerns. Tie patterns at column intersections confirm the reinforcement placement stage.',
     },
     submittedAt: new Date(Date.now() - 75 * 60 * 60 * 1000).toISOString(),
     reviewedAt: new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString(),
     reviewedById: 'usr-003',
     isOfflineSubmission: false,
+    geoLocation: {
+      lat: -1.9443,
+      lng: 30.0620,
+      distanceFromSite: 12,
+      isOnSite: true,
+      capturedAt: new Date(Date.now() - 75 * 60 * 60 * 1000).toISOString(),
+    },
   },
 ];

@@ -1,6 +1,6 @@
 // ── Domain types — mirrors the backend data model ────────────────────────────
 
-export type UserRole = 'worker' | 'manager';
+export type UserRole = 'worker' | 'manager' | 'owner';
 
 export type ConstructionStage =
   | 'formwork_erected'
@@ -37,13 +37,26 @@ export interface Site {
 }
 
 export interface AIResult {
-  detectedStage: ConstructionStage;
+  /** null when the model classified the image as not a construction site */
+  detectedStage: ConstructionStage | null;
   reportedStage: ConstructionStage;
   confidenceScore: number;      // 0–100
   isMatch: boolean;
   inferenceMode: InferenceMode;
   modelVersion: string;
   processedAt: string;
+  /** Natural-language feedback from the model */
+  textFeedback?: string;
+}
+
+export interface GeoLocation {
+  lat: number;
+  lng: number;
+  /** Distance in metres from the registered site coordinates */
+  distanceFromSite: number;
+  /** Whether the report was captured within the accepted radius */
+  isOnSite: boolean;
+  capturedAt: string;
 }
 
 export interface Report {
@@ -61,14 +74,31 @@ export interface Report {
   reviewedAt: string | null;
   reviewedById: string | null;
   isOfflineSubmission: boolean;
+  /** GPS capture at submission time */
+  geoLocation?: GeoLocation;
 }
 
 // ── Navigation param types ────────────────────────────────────────────────────
 
 export type RootStackParamList = {
+  Onboarding: undefined;
+  Signup: undefined;
   Login: undefined;
   WorkerApp: undefined;
   ManagerApp: undefined;
+  OwnerApp: undefined;
+};
+
+// ── Owner navigation ──────────────────────────────────────────────────────────
+
+export type OwnerTabParamList = {
+  OwnerOverview: undefined;
+  OwnerReports:  undefined;
+  OwnerProfile:  undefined;
+};
+
+export type OwnerStackParamList = {
+  OwnerTabs: undefined;
 };
 
 export type WorkerTabParamList = {
@@ -78,9 +108,10 @@ export type WorkerTabParamList = {
 };
 
 export type WorkerStackParamList = {
-  WorkerTabs: undefined;
-  SubmitReport: undefined;
+  WorkerTabs:         undefined;
+  SubmitReport:       undefined;
   WorkerReportDetail: { reportId: string };
+  PanoramaCapture:    { onCaptures: (uris: string[]) => void };
 };
 
 export type ManagerTabParamList = {
@@ -91,8 +122,13 @@ export type ManagerTabParamList = {
 };
 
 export type ManagerStackParamList = {
-  ManagerTabs: undefined;
-  ReportDetail: { reportId: string };
+  ManagerTabs:       undefined;
+  ReportDetail:      { reportId: string };
+  AIConfidence:      { reportId: string };
+  CreateProject:     undefined;
+  SiteDetail:        { siteId: string };
+  Analytics:         undefined;
+  SitesMap:          undefined;
 };
 
 // ── UI / state helpers ────────────────────────────────────────────────────────
