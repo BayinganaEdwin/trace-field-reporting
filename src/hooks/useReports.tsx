@@ -7,28 +7,54 @@
  */
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import {
+import * as ApiService from '../services/apiService';
+import { getCurrentUserId, getCurrentUserRole } from '../services/config';
+import type { Report, Site } from '../types';
+
+const {
   fetchReports,
   fetchSites,
   submitReport,
   approveReport,
   flagReport,
-  type SubmitReportPayload,
-} from '../data/mockService';
-import type { Report, Site } from '../types';
+  rejectReport,
+  deleteReport,
+} = ApiService;
+
+/**
+ * Workers must only ever see their own reports.
+ * The backend already enforces this server-side, but we apply the same
+ * filter client-side as a defence-in-depth guarantee — so no worker ever
+ * glimpses another worker's data even if the API response is unexpected.
+ */
+function scopeReports(reports: Report[]): Report[] {
+  if (getCurrentUserRole() === 'worker') {
+    const uid = getCurrentUserId();
+    return reports.filter((r) => r.submittedById === uid);
+  }
+  return reports;
+}
+
+type SubmitReportPayload = MockService.SubmitReportPayload;
 
 // ── Context shape ─────────────────────────────────────────────────────────────
 
 interface ReportsContextValue {
   reports: Report[];
   sites: Site[];
+  /** The site currently selected by the user (worker or manager). Defaults to the first site on load. */
+  activeSite: Site | null;
+  setActiveSite: (site: Site) => void;
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
   submit: (payload: SubmitReportPayload) => Promise<void>;
   approve: (reportId: string, reviewerId: string) => Promise<void>;
   flag: (reportId: string, reviewerId: string) => Promise<void>;
+  reject: (reportId: string, reviewerId: string, comment: string) => Promise<void>;
+  deleteReport: (reportId: string) => Promise<void>;
   getReport: (id: string) => Report | undefined;
+  addSite: (site: Site) => void;
 }
 
 const ReportsContext = createContext<ReportsContextValue | null>(null);
@@ -40,18 +66,25 @@ interface ReportsProviderProps {
 }
 
 export function ReportsProvider({ children }: ReportsProviderProps) {
-  const [reports, setReports] = useState<Report[]>([]);
-  const [sites, setSites]     = useState<Site[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState<string | null>(null);
+  const [reports, setReports]     = useState<Report[]>([]);
+  const [sites, setSites]         = useState<Site[]>([]);
+  const [activeSite, setActiveSiteState] = useState<Site | null>(null);
+  const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState<string | null>(null);
+
+  const setActiveSite = useCallback((site: Site) => {
+    setActiveSiteState(site);
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const [r, s] = await Promise.all([fetchReports(), fetchSites()]);
-      setReports(r);
+      setReports(scopeReports(r));
       setSites(s);
+      // Default to first site on initial load; preserve selection on refresh
+      setActiveSiteState((prev) => prev ?? s[0] ?? null);
     } catch {
       setError('Failed to load data. Pull to refresh.');
     } finally {
@@ -64,13 +97,28 @@ export function ReportsProvider({ children }: ReportsProviderProps) {
   const refresh = useCallback(() => load(), [load]);
 
   const submit = useCallback(async (payload: SubmitReportPayload) => {
+    // Track the ID of the last onPhaseUpdate so we can replace it when the
+    // backend assigns a permanent ID (real API: temp id → backend id transition).
+    let trackedId: string | null = null;
+
     await submitReport(payload, (updated) => {
       setReports((prev) => {
-        const exists = prev.some((r) => r.id === updated.id);
-        return exists
-          ? prev.map((r) => (r.id === updated.id ? updated : r))
-          : [updated, ...prev];
+        const existsById = prev.some((r) => r.id === updated.id);
+        if (existsById) {
+          // Normal update — same ID already in list
+          return prev.map((r) => (r.id === updated.id ? updated : r));
+        }
+        // ID changed (e.g. tmp-* → report-*): replace the old entry
+        if (trackedId && trackedId !== updated.id) {
+          const hasPrev = prev.some((r) => r.id === trackedId);
+          if (hasPrev) {
+            return prev.map((r) => (r.id === trackedId ? updated : r));
+          }
+        }
+        // First time we see this report — prepend
+        return [updated, ...prev];
       });
+      trackedId = updated.id;
     });
   }, []);
 
@@ -112,14 +160,49 @@ export function ReportsProvider({ children }: ReportsProviderProps) {
     }
   }, []);
 
+  const reject = useCallback(async (reportId: string, reviewerId: string, comment: string) => {
+    setReports((prev) =>
+      prev.map((r) =>
+        r.id === reportId
+          ? { ...r, status: 'rejected', reviewedAt: new Date().toISOString(), reviewedById: reviewerId }
+          : r,
+      ),
+    );
+    try {
+      const updated = await rejectReport(reportId, reviewerId, comment);
+      setReports((prev) => prev.map((r) => (r.id === reportId ? updated : r)));
+    } catch {
+      setReports((prev) =>
+        prev.map((r) => (r.id === reportId ? { ...r, status: 'verified' } : r)),
+      );
+    }
+  }, []);
+
+  const removeReport = useCallback(async (reportId: string) => {
+    // Optimistic remove
+    setReports((prev) => prev.filter((r) => r.id !== reportId));
+    try {
+      await deleteReport(reportId);
+    } catch (err) {
+      // Revert on failure by re-fetching
+      const rows = await fetchReports();
+      setReports(scopeReports(rows));
+      throw err;
+    }
+  }, []);
+
   const getReport = useCallback(
     (id: string) => reports.find((r) => r.id === id),
     [reports],
   );
 
+  const addSite = useCallback((site: Site) => {
+    setSites((prev) => [...prev, site]);
+  }, []);
+
   return (
     <ReportsContext.Provider
-      value={{ reports, sites, loading, error, refresh, submit, approve, flag, getReport }}
+      value={{ reports, sites, activeSite, setActiveSite, loading, error, refresh, submit, approve, flag, reject, deleteReport: removeReport, getReport, addSite }}
     >
       {children}
     </ReportsContext.Provider>
