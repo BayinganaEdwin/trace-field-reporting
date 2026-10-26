@@ -17,7 +17,8 @@ import { Typography } from '../../components/ui/Typography';
 import { Button } from '../../components/ui/Button';
 import { colors } from '../../theme/colors';
 import { spacing, radii, borderWidths } from '../../theme/spacing';
-import { MOCK_WORKER, MOCK_MANAGER } from '../../data/mockData';
+import { setCurrentUserId, setCurrentUserRole, DEMO_USER_MAP } from '../../services/config';
+import { useReports } from '../../hooks/useReports';
 import type { RootStackParamList } from '../../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
@@ -26,7 +27,7 @@ const DEMO_ACCOUNTS = [
   {
     role: 'worker' as const,
     label: 'Site Worker',
-    name: MOCK_WORKER.name,
+    name: 'Jean Claude Nzeyimana',
     email: 'worker@trace.rw',
     password: '••••••••',
     detail: 'Submit field reports & photos',
@@ -34,14 +35,23 @@ const DEMO_ACCOUNTS = [
   {
     role: 'manager' as const,
     label: 'Project Manager',
-    name: MOCK_MANAGER.name,
+    name: 'David Uwimana',
     email: 'manager@trace.rw',
     password: '••••••••',
     detail: 'Review, approve & monitor sites',
   },
+  {
+    role: 'owner' as const,
+    label: 'Property Owner',
+    name: 'Alice Uwase',
+    email: 'owner@trace.rw',
+    password: '••••••••',
+    detail: 'View project progress & reports',
+  },
 ];
 
 export function LoginScreen({ navigation }: Props) {
+  const { refresh } = useReports();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -58,8 +68,20 @@ export function LoginScreen({ navigation }: Props) {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      if (email.startsWith('manager')) {
+      // Resolve the backend user ID for the demo account and inject into API headers
+      const prefix = email.startsWith('manager')
+        ? 'manager'
+        : email.startsWith('owner')
+        ? 'owner'
+        : 'worker';
+      setCurrentUserId(DEMO_USER_MAP[prefix] ?? DEMO_USER_MAP.worker);
+      setCurrentUserRole(prefix as 'worker' | 'manager' | 'owner');
+      // Re-fetch reports + sites now that we have a valid user ID
+      refresh();
+      if (prefix === 'manager') {
         navigation.replace('ManagerApp');
+      } else if (prefix === 'owner') {
+        navigation.replace('OwnerApp');
       } else {
         navigation.replace('WorkerApp');
       }
@@ -194,6 +216,8 @@ export function LoginScreen({ navigation }: Props) {
                         backgroundColor:
                           account.role === 'manager'
                             ? colors.accentLight
+                            : account.role === 'owner'
+                            ? colors.warningBg
                             : colors.successBg,
                       },
                     ]}
@@ -205,6 +229,8 @@ export function LoginScreen({ navigation }: Props) {
                           backgroundColor:
                             account.role === 'manager'
                               ? colors.accent
+                              : account.role === 'owner'
+                              ? colors.warningText
                               : colors.successText,
                         },
                       ]}
@@ -229,9 +255,19 @@ export function LoginScreen({ navigation }: Props) {
             ))}
           </View>
 
-          {/* <Typography variant="overline" color={colors.textQuaternary} align="center" style={styles.notice}>
-            Prototype · ALU Capstone 2025 · Mock data
-          </Typography> */}
+          {/* Create account link */}
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Signup')}
+            activeOpacity={0.7}
+            style={styles.signupLink}
+          >
+            <Typography variant="footnote" color={colors.textSecondary} align="center">
+              New to Trace?{' '}
+              <Typography variant="footnoteSemiBold" color={colors.accent}>
+                Create an account
+              </Typography>
+            </Typography>
+          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -385,8 +421,7 @@ const styles = StyleSheet.create({
     gap: 2,
     flex: 1,
   },
-  notice: {
-    letterSpacing: 0.8,
-    lineHeight: 18,
+  signupLink: {
+    paddingVertical: spacing[2],
   },
 });

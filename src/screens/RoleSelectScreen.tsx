@@ -5,10 +5,9 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Typography } from '../components/ui/Typography';
 import { colors } from '../theme/colors';
 import { spacing, radii, borderWidths } from '../theme/spacing';
-import { MOCK_WORKER, MOCK_MANAGER } from '../data/mockData';
 import type { RootStackParamList } from '../types';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'RoleSelect'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
 interface RoleTileProps {
   title: string;
@@ -75,14 +74,14 @@ export function RoleSelectScreen({ navigation }: Props) {
           <RoleTile
             title="Site Worker"
             subtitle="Submit daily field reports with photo evidence"
-            detail={`Signed in as ${MOCK_WORKER.name}`}
+            detail="Signed in as Jean Claude Nzeyimana"
             onPress={() => navigation.replace('WorkerApp')}
             accent
           />
           <RoleTile
             title="Project Manager"
             subtitle="Review, verify, and approve field reports"
-            detail={`Signed in as ${MOCK_MANAGER.name}`}
+            detail="Signed in as David Uwimana"
             onPress={() => navigation.replace('ManagerApp')}
           />
         </View>
